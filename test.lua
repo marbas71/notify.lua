@@ -2,18 +2,8 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RedeemCode = ReplicatedStorage:WaitForChild("RedeemCode")
 
-local webhookUrl = "https://discord.com/api/webhooks/1243747786088910900/6UiTCE_9-M1yjJOaEnevNpe8y43tk36xXqbCKqz4gdlDfTjZPDDfhDaSaYXgAPYq42gx"
 local testedCodesFile = "tested_codes.txt"
 local concurrentThreads = 10 -- Número de corrotinas simultâneas
-
-local function sendToDiscord(code)
-    local data = {
-        ["content"] = "Possibly found an item with the code: " .. code
-    }
-    local jsonData = HttpService:JSONEncode(data)
-
-    HttpService:PostAsync(webhookUrl, jsonData, Enum.HttpContentType.ApplicationJson)
-end
 
 local function loadTestedCodes()
     local testedCodes = {}
@@ -70,18 +60,15 @@ end
 
 local function testCode(code, testedCodes)
     if testedCodes[code] then
-        print("Code already tested: " .. code)
         return
     end
 
-    local args = {
-        [1] = code
-    }
-    local success = RedeemCode:InvokeServer(unpack(args))
+    local args = { [1] = code }
+    local success = pcall(function()
+        return RedeemCode:InvokeServer(unpack(args))
+    end)
 
     if success then
-        sendToDiscord(code)
-    else
         saveTestedCode(code)
         testedCodes[code] = true
     end
